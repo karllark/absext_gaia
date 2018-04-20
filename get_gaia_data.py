@@ -24,7 +24,8 @@ def get_gaia_single_star(sname, tap_service):
                 CIRCLE('ICRS',%s,%s,0.00027))=1""" % (coord.ra.degree,
                                                    coord.dec.degree)
 
-    tap_results = tap_service.run_async(query_str)
+    # tap_results = tap_service.run_async(query_str)
+    tap_results = tap_service.search(query_str)
 
     if len(tap_results) > 0:
         return (tap_results[0], len(tap_results))
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     # query GAIA and create a table
     ot = Table(names=('name', 'parallax', 'parallax_error', 'nfound',
                       'G_mag', 'G_flux', 'G_flux_error'),
-               dtype=('S10', 'f', 'f', 'i', 'f', 'f', 'f'))
+               dtype=('S15', 'f', 'f', 'i', 'f', 'f', 'f'))
     for sname in snames['name']:
         # get the GAIA info for one star
         sres, nres = get_gaia_single_star(sname, tap_service)
