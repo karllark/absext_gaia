@@ -3,7 +3,7 @@ Code for a possible paper on absolute extinctions
 
 Use GAIA data to measure absolute extinctions using
 the pair method.
-This possible paper is Gordon (in prep).
+This possible paper is Gordon + TBD (in prep).
 
 In Development!
 ---------------
