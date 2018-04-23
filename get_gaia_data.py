@@ -38,7 +38,8 @@ if __name__ == "__main__":
     tap_service = vo.dal.TAPService("http://gaia.ari.uni-heidelberg.de/tap")
 
     # get the list of starnames
-    itablename = 'data/mwext_resolv.dat'
+    itablename = 'data/mwext_fuse.dat'
+    # itablename = 'data/mwext_resolv.dat'
     snames = Table.read(itablename,
                         format='ascii.fixed_width', guess=False)
 
