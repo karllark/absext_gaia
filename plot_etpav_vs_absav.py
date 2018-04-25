@@ -21,9 +21,9 @@ if __name__ == "__main__":
     ptablename = 'data/mwext_fuse_pairs.dat'
     fitspath = '/home/kgordon/Dust/Ext/FUSE/ext1_fuse'
     # IUE Sample
-    gtablename = 'data/mwext_resolv_gaia.dat'
-    ptablename = 'data/mwext_fuse_pairs.dat'
-    fitspath = '/home/kgordon/Dust/Ext/ext0_fuse'
+    # gtablename = 'data/mwext_resolv_gaia.dat'
+    # ptablename = 'data/mwext_fuse_pairs.dat'
+    # fitspath = '/home/kgordon/Dust/Ext/ext0_fuse'
 
     # gtablename = 'data/mwext_resolv_gaia.dat'
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
             if (pr > 0) and (pc > 0):
                 dmagr = math.log10(pr)
                 dmagc = math.log10(pc)
-                gext.append(gmagr - gmagc + 5.*dmagc - 5.*dmagr)
+                gext.append(gmagr - gmagc + 5.*dmagr - 5.*dmagc)
                 gext_unc.append(gmagr_unc**2 + gmagc_unc**2
                                 + 5.*pr_unc/(pr*math.log(10.))
                                 + 5.*pc_unc/(pc*math.log(10.)))

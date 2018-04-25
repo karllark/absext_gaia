@@ -19,13 +19,13 @@ def get_gaia_single_star(sname, tap_service):
     coordstr = '%s %s' % (res['RA'].data[0], res['DEC'].data[0])
     coord = SkyCoord(coordstr, unit=(u.hourangle, u.degree), frame='icrs')
 
-    query_str = """SELECT * FROM gaiadr1.gaia_source
+    query_str = """SELECT * FROM gaiadr2.gaia_source
                 WHERE CONTAINS(POINT('ICRS',ra,dec),
                 CIRCLE('ICRS',%s,%s,0.00027))=1""" % (coord.ra.degree,
                                                    coord.dec.degree)
 
-    # tap_results = tap_service.run_async(query_str)
-    tap_results = tap_service.search(query_str)
+    tap_results = tap_service.run_async(query_str)
+    #tap_results = tap_service.search(query_str)
 
     if len(tap_results) > 0:
         return (tap_results[0], len(tap_results))
@@ -36,10 +36,11 @@ if __name__ == "__main__":
 
     # initialize the GAIA TAP service
     tap_service = vo.dal.TAPService("http://gaia.ari.uni-heidelberg.de/tap")
+    print(tap_service)
 
     # get the list of starnames
-    itablename = 'data/mwext_fuse.dat'
-    # itablename = 'data/mwext_resolv.dat'
+    # itablename = 'data/mwext_fuse.dat'
+    itablename = 'data/mwext_small.dat'
     snames = Table.read(itablename,
                         format='ascii.fixed_width', guess=False)
 
@@ -48,6 +49,7 @@ if __name__ == "__main__":
                       'G_mag', 'G_flux', 'G_flux_error'),
                dtype=('S15', 'f', 'f', 'i', 'f', 'f', 'f'))
     for sname in snames['name']:
+        print('trying ', sname)
         # get the GAIA info for one star
         sres, nres = get_gaia_single_star(sname, tap_service)
         if nres == 0:
