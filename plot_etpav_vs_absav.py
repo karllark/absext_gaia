@@ -12,6 +12,25 @@ import matplotlib
 from astropy.table import Table
 from astropy.io import fits
 
+from measure_extinction.stardata import StarData
+
+def compute_absext(redplx, compplx,
+                   redmag, compmag):
+    """
+    Compute the absolute extinction given the parallaxes and magnitudes
+    for reddened and comparision stars.  Done assuming both have the
+    same intrinsic luminosity.
+    """
+    if (redplx[0] > 0) & (compplx[0] > 0):
+        dmagr = math.log10(redplx[0])
+        dmagc = math.log10(compplx[0])
+        gext = (redmag[0] - compmag[0] + 5.*dmagr - 5.*dmagc)
+        gext_unc = (redmag[1]**2 + compmag[1]**2
+                    + 5.*redplx[1]/(redplx[0]*math.log(10.))
+                    + 5.*compplx[1]/(compplx[0]*math.log(10.)))
+        return (gext, gext_unc)
+    else:
+        return (None, None)
 
 if __name__ == "__main__":
 
@@ -38,6 +57,8 @@ if __name__ == "__main__":
     gext_unc = []
     etp_av = []
     etp_av_unc = []
+    abs_av = []
+    abs_av_unc = []
     for rname, cname in zip(pt['rname'].data, pt['cname'].data):
         ri, = np.where(gt['name'].data == rname)
         ci, = np.where(gt['name'].data == cname)
@@ -50,13 +71,34 @@ if __name__ == "__main__":
             gmagr_unc = gmagr*gt['G_flux_error'][ri[0]]/gt['G_flux'][ri[0]]
             gmagc = gt['G_mag'][ci[0]]
             gmagc_unc = gmagc*gt['G_flux_error'][ci[0]]/gt['G_flux'][ci[0]]
-            if (pr > 0) and (pc > 0):
-                dmagr = math.log10(pr)
-                dmagc = math.log10(pc)
-                gext.append(gmagr - gmagc + 5.*dmagr - 5.*dmagc)
-                gext_unc.append(gmagr_unc**2 + gmagc_unc**2
-                                + 5.*pr_unc/(pr*math.log(10.))
-                                + 5.*pc_unc/(pc*math.log(10.)))
+
+            redplx = (gt['parallax'][ri[0]], gt['parallax_error'][ri[0]])
+            redmag = (gt['G_mag'][ri[0]],
+                      gt['G_mag'][ri[0]]*gt['G_flux_error'][ri[0]]
+                      / gt['G_flux'][ri[0]])
+            compplx = (gt['parallax'][ci[0]], gt['parallax_error'][ci[0]])
+            compmag = (gt['G_mag'][ci[0]],
+                       gt['G_mag'][ci[0]]*gt['G_flux_error'][ci[0]]
+                       / gt['G_flux'][ci[0]])
+            absext = compute_absext(redplx, compplx, redmag, compmag)
+            if absext[0] is not None:
+                gext.append(absext[0])
+                gext_unc.append(absext[1])
+
+                # calculate the V band abs extinction
+                redname = '/home/kgordon/Python_git/measured_extcurves/data/DAT_files/%s.dat' % (rname)
+                compname = '/home/kgordon/Python_git/measured_extcurves/data/DAT_files/%s.dat' % (cname)
+                if os.path.isfile(redname) and os.path.isfile(compname):
+                    redstar = StarData(redname, photonly=True)
+                    compstar = StarData(compname, photonly=True)
+                    v_absext = compute_absext(redplx, compplx,
+                                              redstar.data['BAND'].bands['V'],
+                                              compstar.data['BAND'].bands['V'])
+                    abs_av.append(v_absext[0])
+                    abs_av_unc.append(v_absext[1])
+                else:
+                    abs_av.append(-1.0)
+                    abs_av_unc.append(-1.0)
 
                 # get the extrapolated derived value from FITS extinction curve
                 fname = "%s/%s_%s/%s_%s_ext_bin.fits" \
@@ -89,14 +131,22 @@ if __name__ == "__main__":
     # plot 1 to 1 line
     # ax.plot([1.0, 1e5], [1.0, 1e5], 'k-')
 
-    ax.errorbar(etp_av, gext, xerr=etp_av_unc, yerr=gext_unc,
-                fmt='bo', capsize=3)
+    # ax.errorbar(etp_av, gext, xerr=etp_av_unc, yerr=gext_unc,
+    #            fmt='bo', capsize=3)
+    # ax.errorbar(etp_av, abs_av, xerr=etp_av_unc, yerr=abs_av_unc,
+    #            fmt='go', capsize=3)
 
-    ax.set_xlabel(u'$A(V)_{etp}$')
-    ax.set_ylabel(u'$A(G)_{abs}$')
+    ax.plot(gext, gext_unc, 'bo', label='G')
+    ax.plot(abs_av, abs_av_unc, 'go', label='V')
+    ax.legend()
+
+    ax.set_xlabel(u'$A(\lambda)$')
+    ax.set_ylabel(u'$\sigma[A(\lambda)]$')
+#    ax.set_xlabel(u'$A(V)_{etp}$')
+#    ax.set_ylabel(u'$A(G)_{abs}$')
 #    ax.set_xscale('log')
 #    ax.set_yscale('log')
-#    ax.set_xlim(1e2, 2e4)
-#    ax.set_ylim(1e2, 2e4)
+    ax.set_xlim(-2., 4.)
+    ax.set_ylim(0., 1.)
 
     plt.show()
