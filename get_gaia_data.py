@@ -39,15 +39,16 @@ if __name__ == "__main__":
     print(tap_service)
 
     # get the list of starnames
-    # itablename = 'data/mwext_fuse.dat'
-    itablename = 'data/mwext_small.dat'
+    itablename = 'data/mwext_fuse.dat'
+    # itablename = 'data/mwext_small.dat'
     snames = Table.read(itablename,
                         format='ascii.fixed_width', guess=False)
 
     # query GAIA and create a table
     ot = Table(names=('name', 'parallax', 'parallax_error', 'nfound',
-                      'G_mag', 'G_flux', 'G_flux_error'),
-               dtype=('S15', 'f', 'f', 'i', 'f', 'f', 'f'))
+                      'G_mag', 'G_flux', 'G_flux_error',
+                      'AG', 'AG_lower', 'AG_upper'),
+               dtype=('S15', 'f', 'f', 'i', 'f', 'f', 'f', 'f', 'f', 'f'))
     for sname in snames['name']:
         print('trying ', sname)
         # get the GAIA info for one star
@@ -62,7 +63,10 @@ if __name__ == "__main__":
             ot.add_row((sname, sres['parallax'], sres['parallax_error'], nres,
                         sres['phot_g_mean_mag'],
                         sres['phot_g_mean_flux'],
-                        sres['phot_g_mean_flux_error']))
+                        sres['phot_g_mean_flux_error'],
+                        sres['a_g_val'],
+                        sres['a_g_percentile_lower'],
+                        sres['a_g_percentile_upper']))
 
     # output the resulting table
     otablename = itablename.replace('.dat', '_gaia.dat')
